@@ -2,9 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>中國銀行卡號生成器（測試用）</title>
   <style>
+    /* (保持前面樣式不變，這裡省略，使用上面版本即可) */
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -15,11 +16,12 @@
     .container {
       max-width: 500px;
       margin: auto;
-      background: #ffffff;
+      background: #fff;
       border-radius: 12px;
       padding: 30px 25px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       text-align: center;
+      position: relative;
     }
     h1 {
       color: #2c3e50;
@@ -39,14 +41,15 @@
       font-size: 16px;
       border-radius: 6px;
       border: 1px solid #ccc;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
     }
     button {
       background-color: #3498db;
       color: white;
-      border: none;
       font-weight: bold;
       margin-top: 20px;
-      cursor: pointer;
+      border: none;
     }
     button:hover {
       background-color: #2980b9;
@@ -61,10 +64,12 @@
       letter-spacing: 2px;
       color: #2c3e50;
       word-break: break-word;
+      user-select: text;
     }
     .copy-btn {
       background-color: #2ecc71;
       margin-top: 10px;
+      border: none;
     }
     .copy-btn:hover {
       background-color: #27ae60;
@@ -72,11 +77,37 @@
     .qr-container {
       margin-top: 20px;
     }
-    .qr-container img {
+    #qrcode {
       margin-top: 10px;
-      max-width: 200px;
+      width: 200px;
+      height: 200px;
+      margin-left: auto;
+      margin-right: auto;
       border: 6px solid #f0f0f0;
       border-radius: 12px;
+    }
+
+    /* Toast 訊息 - 顯示在上方 */
+    #toast {
+      visibility: hidden;
+      min-width: 200px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 14px;
+      position: fixed;
+      z-index: 1000;
+      left: 50%;
+      top: 30px;
+      transform: translateX(-50%);
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
     }
   </style>
 </head>
@@ -113,13 +144,18 @@
     <button class="copy-btn" onclick="copyToClipboard()">複製卡號</button>
 
     <div class="qr-container">
-      <label>QR Code 預覽：</label>
-      <img id="qrImage" src="" alt="QR Code">
+      <label>QR Code 預覽：</label><br/>
+      <div id="qrcode"></div>
     </div>
   </div>
 
+  <div id="toast"></div>
+
+  <!-- QRCode.js 開源庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
   <script>
-    let currentCard = '';
+    let qrcode = null;
 
     function luhnChecksum(number) {
       let sum = 0;
@@ -153,24 +189,47 @@
         }
       }
 
-      currentCard = cardNumber;
-      document.getElementById("cardNumber").textContent = cardNumber;
+      const cardDisplay = document.getElementById("cardNumber");
+      cardDisplay.textContent = cardNumber;
 
-      const qrURL = "https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=" + encodeURIComponent(cardNumber);
-      document.getElementById("qrImage").src = qrURL;
+      // 清空之前的 QRCode
+      if (qrcode) {
+        qrcode.clear();
+      } else {
+        qrcode = new QRCode(document.getElementById("qrcode"), {
+          width: 200,
+          height: 200,
+        });
+      }
+
+      // 使用顯示的卡號生成 QRCode
+      qrcode.makeCode(cardDisplay.textContent);
     }
 
     function copyToClipboard() {
-      if (!currentCard) {
-        alert("請先生成卡號！");
+      const cardDisplay = document.getElementById("cardNumber");
+      const text = cardDisplay.textContent.trim();
+
+      if (!text || text === "請點擊按鈕生成卡號") {
+        showToast("請先生成卡號！");
         return;
       }
-      navigator.clipboard.writeText(currentCard).then(() => {
-        alert("卡號已複製到剪貼簿！");
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("卡號已複製到剪貼簿！");
       }, () => {
-        alert("複製失敗，請手動選取複製。");
+        showToast("複製失敗，請手動選取複製。");
       });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = "show";
+      setTimeout(() => {
+        toast.className = toast.className.replace("show", "");
+      }, 2500);
     }
   </script>
 </body>
 </html>
+
