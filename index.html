@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中國銀行卡號生成器（測試用）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #d9e4f5, #f0f8ff);
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 30px 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 25px;
+    }
+    label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #34495e;
+      display: block;
+      text-align: left;
+    }
+    select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .card-number {
+      font-size: 22px;
+      font-weight: bold;
+      background: #ecf0f1;
+      padding: 16px;
+      border-radius: 10px;
+      margin-top: 20px;
+      letter-spacing: 2px;
+      color: #2c3e50;
+      word-break: break-word;
+    }
+    .copy-btn {
+      background-color: #2ecc71;
+      margin-top: 10px;
+    }
+    .copy-btn:hover {
+      background-color: #27ae60;
+    }
+    .qr-container {
+      margin-top: 20px;
+    }
+    .qr-container img {
+      margin-top: 10px;
+      max-width: 200px;
+      border: 6px solid #f0f0f0;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>中國銀行卡號生成器</h1>
+    <label for="bankSelect">選擇銀行：</label>
+    <select id="bankSelect">
+      <option value="622202">中國銀行</option>
+      <option value="621700">建設銀行</option>
+      <option value="622848">農業銀行</option>
+      <option value="622622">民生銀行</option>
+      <option value="622260">交通銀行</option>
+      <option value="622200">工商銀行</option>
+      <option value="622690">中信銀行</option>
+      <option value="622663">光大銀行</option>
+      <option value="622521">浦發銀行</option>
+      <option value="622588">招商銀行</option>
+      <option value="622909">興業銀行</option>
+      <option value="622637">華夏銀行</option>
+      <option value="622568">廣發銀行</option>
+      <option value="622760">北京銀行</option>
+      <option value="622892">上海銀行</option>
+      <option value="621076">渤海銀行</option>
+      <option value="621479">南京銀行</option>
+      <option value="621420">杭州銀行</option>
+      <option value="621463">廣州銀行</option>
+      <option value="622516">深圳發展銀行</option>
+    </select>
+
+    <button onclick="generateCard()">生成卡號</button>
+
+    <div id="cardNumber" class="card-number">請點擊按鈕生成卡號</div>
+    <button class="copy-btn" onclick="copyToClipboard()">複製卡號</button>
+
+    <div class="qr-container">
+      <label>QR Code 預覽：</label>
+      <img id="qrImage" src="" alt="QR Code">
+    </div>
+  </div>
+
+  <script>
+    let currentCard = '';
+
+    function luhnChecksum(number) {
+      let sum = 0;
+      let shouldDouble = false;
+      for (let i = number.length - 1; i >= 0; i--) {
+        let digit = parseInt(number.charAt(i));
+        if (shouldDouble) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+        shouldDouble = !shouldDouble;
+      }
+      return sum % 10;
+    }
+
+    function generateCard() {
+      const prefix = document.getElementById("bankSelect").value;
+      const length = 16;
+      let cardNumber = prefix;
+
+      while (cardNumber.length < length - 1) {
+        cardNumber += Math.floor(Math.random() * 10);
+      }
+
+      for (let i = 0; i <= 9; i++) {
+        let candidate = cardNumber + i;
+        if (luhnChecksum(candidate) === 0) {
+          cardNumber = candidate;
+          break;
+        }
+      }
+
+      currentCard = cardNumber;
+      document.getElementById("cardNumber").textContent = cardNumber;
+
+      const qrURL = "https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=" + encodeURIComponent(cardNumber);
+      document.getElementById("qrImage").src = qrURL;
+    }
+
+    function copyToClipboard() {
+      if (!currentCard) {
+        alert("請先生成卡號！");
+        return;
+      }
+      navigator.clipboard.writeText(currentCard).then(() => {
+        alert("卡號已複製到剪貼簿！");
+      }, () => {
+        alert("複製失敗，請手動選取複製。");
+      });
+    }
+  </script>
+</body>
+</html>
